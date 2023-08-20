@@ -104,29 +104,13 @@ class Bot:
                          "You have left the chat",
                          reply_markup=KEYBOARDS.main
                          )
-            self._forward_message_to_connected_user(user,
-                                                    "User has left the chat",
-                                                    reply_markup=KEYBOARDS.main)
+            send_message(self, user.get("connect_to"), "Your chat partner has left the chat",
+                         reply_markup=KEYBOARDS.main
+                         )
             self._update_user_state(user.get("connect_to"), STATES.idle)
             self._update_user_state(message.chat.id, STATES.idle)
             self._set_None_connected_to(user.get("connect_to"))
             self._set_None_connected_to(message.chat.id)
-
-    # def _handle_text_message(self, message):
-    #     """
-    #     Echo messages when user is in 'connect' state.
-    #     """
-    #     user = self._get_user_from_db(message.chat.id)
-    #     if self._user_state_is_connect(user):
-    #         self._forward_message_to_connected_user(user, message.text)
-
-    # def _handle_photo_message(self, message):
-    #     """
-    #     Handle photo messages when user is in 'connect' state.
-    #     """
-    #     user = self._get_user_from_db(message.chat.id)
-    #     if self._user_state_is_connect(user):
-    #         self._forward_photo_to_connected_user(user, message.photo[-1].file_id)
 
     # private helper methods for DB operations
     def _get_user_from_db(self, chat_id):
@@ -137,17 +121,6 @@ class Bot:
         """Check if the user's state is 'connect'."""
         return user.get('state') == STATES.connect
 
-    # def _forward_message_to_connected_user(self, user, text, reply_markup=None):
-    #     """Forward the message to the connected user."""
-    #     connect_to = user.get('connect_to')
-    #     if connect_to:
-    #         send_message(self, connect_to, text, reply_markup=reply_markup)
-
-    # def _forward_photo_to_connected_user(self, user, photo_id, reply_markup=None):
-    #     """Forward the message to the connected user."""
-    #     connect_to = user.get('connect_to')
-    #     if connect_to:
-    #         send_photo(self, connect_to, photo_id, reply_markup=reply_markup)
     def _forward_content_to_connected_user(self, message):
         """
         Forward content based on its type to the connected user.
