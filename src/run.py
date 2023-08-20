@@ -36,14 +36,6 @@ class Bot:
         def handle_content(message):
             self._forward_content_to_connected_user(message)
 
-        # @self.bot.message_handler(content_types=['photo'])
-        # def handle_photo(message):
-        #     self._handle_photo_message(message)
-
-        # @self.bot.message_handler(func=lambda message: True)
-        # def handle_text(message):
-        #     self._handle_text_message(message)
-
     def _handle_welcome(self, message):
         """
         Handle the welcome message and user initialization.
@@ -143,6 +135,7 @@ class Bot:
             send_method(connect_to, message.photo[-1].file_id)  # using highest resolution
         elif message.content_type == 'text':
             send_method(connect_to, message.text)
+            self._insert_message(message, connect_to)
         else:
             file_id = getattr(message, message.content_type).file_id
             send_method(connect_to, file_id)
@@ -156,6 +149,18 @@ class Bot:
                 "connect_to": None
                 }},
             upsert=True
+        )
+
+    def _insert_message(self, message, connect_to):
+        """Insert a message into the database."""
+        self.db.messages.insert_one(
+            {
+                "message": message.text,
+                "user": message.chat.username,
+                "chat": message.chat.id,
+                "date": message.date,
+                'to': self._get_user_from_db(connect_to).get('chat')
+            }
         )
 
     def _find_user_with_state(self, state, chat_id):
