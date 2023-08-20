@@ -23,3 +23,14 @@ STATES = SimpleNamespace(
     settings="SETTINGS",
     connect="CONNECT",
 )
+
+CONTENT_TYPE_MAPPING = {
+    'text': 'send_message',
+    'voice': 'send_voice',
+    'sticker': 'send_sticker',
+    'document': 'send_document',
+    'video': 'send_video',
+    'photo': 'send_photo',
+    'audio': 'send_audio',
+    'animation': 'send_animation',
+}

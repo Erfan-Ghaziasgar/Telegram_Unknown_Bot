@@ -2,9 +2,9 @@ import telebot
 from loguru import logger
 
 from src.bot import bot
-from src.constants import KEYBOARDS, KEYS, STATES
+from src.constants import CONTENT_TYPE_MAPPING, KEYBOARDS, KEYS, STATES
 from src.db import db
-from src.utils.utils import send_message, send_photo
+from src.utils.utils import send_message
 
 
 class Bot:
@@ -32,13 +32,17 @@ class Bot:
         def exit(message):
             self._handle_exit(message)
 
-        @self.bot.message_handler(content_types=['photo'])
-        def handle_photo(message):
-            self._handle_photo_message(message)
+        @self.bot.message_handler(content_types=CONTENT_TYPE_MAPPING.keys())
+        def handle_content(message):
+            self._forward_content_to_connected_user(message)
 
-        @self.bot.message_handler(func=lambda message: True)
-        def handle_text(message):
-            self._handle_text_message(message)
+        # @self.bot.message_handler(content_types=['photo'])
+        # def handle_photo(message):
+        #     self._handle_photo_message(message)
+
+        # @self.bot.message_handler(func=lambda message: True)
+        # def handle_text(message):
+        #     self._handle_text_message(message)
 
     def _handle_welcome(self, message):
         """
@@ -108,21 +112,21 @@ class Bot:
             self._set_None_connected_to(user.get("connect_to"))
             self._set_None_connected_to(message.chat.id)
 
-    def _handle_text_message(self, message):
-        """
-        Echo messages when user is in 'connect' state.
-        """
-        user = self._get_user_from_db(message.chat.id)
-        if self._user_state_is_connect(user):
-            self._forward_message_to_connected_user(user, message.text)
+    # def _handle_text_message(self, message):
+    #     """
+    #     Echo messages when user is in 'connect' state.
+    #     """
+    #     user = self._get_user_from_db(message.chat.id)
+    #     if self._user_state_is_connect(user):
+    #         self._forward_message_to_connected_user(user, message.text)
 
-    def _handle_photo_message(self, message):
-        """
-        Handle photo messages when user is in 'connect' state.
-        """
-        user = self._get_user_from_db(message.chat.id)
-        if self._user_state_is_connect(user):
-            self._forward_photo_to_connected_user(user, message.photo[-1].file_id)
+    # def _handle_photo_message(self, message):
+    #     """
+    #     Handle photo messages when user is in 'connect' state.
+    #     """
+    #     user = self._get_user_from_db(message.chat.id)
+    #     if self._user_state_is_connect(user):
+    #         self._forward_photo_to_connected_user(user, message.photo[-1].file_id)
 
     # private helper methods for DB operations
     def _get_user_from_db(self, chat_id):
@@ -133,18 +137,42 @@ class Bot:
         """Check if the user's state is 'connect'."""
         return user.get('state') == STATES.connect
 
-    def _forward_message_to_connected_user(self, user, text, reply_markup=None):
-        """Forward the message to the connected user."""
-        connect_to = user.get('connect_to')
-        if connect_to:
-            send_message(self, connect_to, text, reply_markup=reply_markup)
+    # def _forward_message_to_connected_user(self, user, text, reply_markup=None):
+    #     """Forward the message to the connected user."""
+    #     connect_to = user.get('connect_to')
+    #     if connect_to:
+    #         send_message(self, connect_to, text, reply_markup=reply_markup)
 
-    # TODO: handle send photo
-    def _forward_photo_to_connected_user(self, user, photo_id, reply_markup=None):
-        """Forward the message to the connected user."""
+    # def _forward_photo_to_connected_user(self, user, photo_id, reply_markup=None):
+    #     """Forward the message to the connected user."""
+    #     connect_to = user.get('connect_to')
+    #     if connect_to:
+    #         send_photo(self, connect_to, photo_id, reply_markup=reply_markup)
+    def _forward_content_to_connected_user(self, message):
+        """
+        Forward content based on its type to the connected user.
+        """
+        user = self._get_user_from_db(message.chat.id)
+        if not self._user_state_is_connect(user):
+            return
+
         connect_to = user.get('connect_to')
-        if connect_to:
-            send_photo(self, connect_to, photo_id, reply_markup=reply_markup)
+        if not connect_to:
+            return
+
+        send_method_name = CONTENT_TYPE_MAPPING.get(message.content_type)
+        if not send_method_name:
+            return  # Unsupported content type
+
+        send_method = getattr(self.bot, send_method_name)
+
+        if message.content_type == 'photo':
+            send_method(connect_to, message.photo[-1].file_id)  # using highest resolution
+        elif message.content_type == 'text':
+            send_method(connect_to, message.text)
+        else:
+            file_id = getattr(message, message.content_type).file_id
+            send_method(connect_to, file_id)
 
     def _upsert_user(self, message):
         """Insert or update a user in the database."""
