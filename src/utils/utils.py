@@ -12,10 +12,9 @@ def send_message(self, chat_id, text, reply_markup=None, emojize=True):
     self.bot.send_message(chat_id, text, reply_markup=reply_markup)
 
 
-def send_photo(self, chat_id, photo, caption=None, reply_markup=None):
+def send_photo(self, chat_id, photo_id, reply_markup=None):
     '''
     Send photo
-    :param photo: photo
-    :param caption: caption
+    :param message: message
     '''
-    self.bot.send_photo(chat_id, photo, caption=caption, reply_markup=reply_markup)
+    self.bot.send_photo(chat_id, photo_id, reply_markup=reply_markup)

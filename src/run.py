@@ -4,7 +4,7 @@ from loguru import logger
 from src.bot import bot
 from src.constants import KEYBOARDS, KEYS, STATES
 from src.db import db
-from src.utils.utils import send_message
+from src.utils.utils import send_message, send_photo
 
 
 class Bot:
@@ -32,9 +32,13 @@ class Bot:
         def exit(message):
             self._handle_exit(message)
 
+        @self.bot.message_handler(content_types=['photo'])
+        def handle_photo(message):
+            self._handle_photo_message(message)
+
         @self.bot.message_handler(func=lambda message: True)
-        def echo_all(message):
-            self._handle_echo_all(message)
+        def handle_text(message):
+            self._handle_text_message(message)
 
     def _handle_welcome(self, message):
         """
@@ -104,13 +108,21 @@ class Bot:
             self._set_None_connected_to(user.get("connect_to"))
             self._set_None_connected_to(message.chat.id)
 
-    def _handle_echo_all(self, message):
+    def _handle_text_message(self, message):
         """
         Echo messages when user is in 'connect' state.
         """
         user = self._get_user_from_db(message.chat.id)
         if self._user_state_is_connect(user):
             self._forward_message_to_connected_user(user, message.text)
+
+    def _handle_photo_message(self, message):
+        """
+        Handle photo messages when user is in 'connect' state.
+        """
+        user = self._get_user_from_db(message.chat.id)
+        if self._user_state_is_connect(user):
+            self._forward_photo_to_connected_user(user, message.photo[-1].file_id)
 
     # private helper methods for DB operations
     def _get_user_from_db(self, chat_id):
@@ -126,6 +138,13 @@ class Bot:
         connect_to = user.get('connect_to')
         if connect_to:
             send_message(self, connect_to, text, reply_markup=reply_markup)
+
+    # TODO: handle send photo
+    def _forward_photo_to_connected_user(self, user, photo_id, reply_markup=None):
+        """Forward the message to the connected user."""
+        connect_to = user.get('connect_to')
+        if connect_to:
+            send_photo(self, connect_to, photo_id, reply_markup=reply_markup)
 
     def _upsert_user(self, message):
         """Insert or update a user in the database."""
