@@ -162,4 +162,5 @@ cython_debug/
 # Custom ignore entries
 Data/
 .vscode/
-
+.flake8
+```
