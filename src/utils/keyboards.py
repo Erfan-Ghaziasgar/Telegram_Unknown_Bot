@@ -1,7 +1,9 @@
 from telebot import types
 
 
-def create_reply_keyboard(buttons: list, row_width: int = 3, one_time_keyboard: bool = True, resize_keyboard: bool = True, selective: bool = False) -> types.ReplyKeyboardMarkup:
+def create_reply_keyboard(buttons: list, row_width: int = 3,
+                          one_time_keyboard: bool = True, resize_keyboard: bool = True,
+                          selective: bool = False) -> types.ReplyKeyboardMarkup:
     """
     Create a keyboard with buttons
     :param buttons: list of buttons
