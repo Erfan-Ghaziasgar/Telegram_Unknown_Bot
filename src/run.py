@@ -2,7 +2,7 @@ import telebot
 from loguru import logger
 
 from src.bot import bot
-from src.constants import CONTENT_TYPE_MAPPING, KEYBOARDS, KEYS, STATES
+from src.constants import CONTENT_TYPE_MAPPING, KEYBOARDS, KEYS, STATES, COMBINED_PATTERN
 from src.db import db
 from src.utils.utils import send_message
 
@@ -23,6 +23,10 @@ class Bot:
         @self.bot.message_handler(commands=['start'])
         def send_welcome(message):
             self._handle_welcome(message)
+
+        @self.bot.message_handler(regexp=COMBINED_PATTERN)
+        def send_help(message):
+            self._handle_help(message)
 
         @self.bot.message_handler(regexp=KEYS.random_connect)
         def random_connect(message):
@@ -48,6 +52,24 @@ class Bot:
         )
         self._upsert_user(message)
         self._update_user_state(message.chat.id, STATES.idle)
+
+    def _handle_help(self, message):
+        """
+        Handle the help command.
+        """
+        send_message(
+            self,
+            message.chat.id,
+            "This is a simple bot that allows you to connect to random users and chat with them.\n\n"
+            "To connect to a random user, use the /random_connect command.\n\n"
+            "To exit a chat, use the /exit command.\n\n"
+            "To exit the queue, use the /exit command.\n\n"
+            "To get this message again, use the /help command.\n\n"
+            "To start over, use the /start command.\n\n"
+            "To get the bot's source code, visit:\n"
+            "https://github.com/Erfan-Ghaziasgar/Telegram_Unknown_Bot",
+            reply_markup=KEYBOARDS.main
+        )
 
     def _handle_random_connect(self, message):
         """
@@ -102,6 +124,14 @@ class Bot:
             self._update_user_state(user.get("connect_to"), STATES.idle)
             self._update_user_state(message.chat.id, STATES.idle)
             self._set_None_connected_to(user.get("connect_to"))
+            self._set_None_connected_to(message.chat.id)
+
+        elif user.get("state") == STATES.random_connect:
+            send_message(self, message.chat.id,
+                         "You have left the queue",
+                         reply_markup=KEYBOARDS.main
+                         )
+            self._update_user_state(message.chat.id, STATES.idle)
             self._set_None_connected_to(message.chat.id)
 
     # private helper methods for DB operations

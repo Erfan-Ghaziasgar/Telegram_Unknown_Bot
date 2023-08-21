@@ -11,6 +11,8 @@ KEYS = SimpleNamespace(
     exit="❌ Exit",
 )
 
+COMBINED_PATTERN = f"^(?:/help|{KEYS.help})"
+
 KEYBOARDS = SimpleNamespace(
     main=create_reply_keyboard([KEYS.random_connect, KEYS.help]),
     settings=create_reply_keyboard([KEYS.settings, KEYS.language, KEYS.back]),
